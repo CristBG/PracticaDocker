@@ -255,3 +255,122 @@ Verificar la ubicación y existencia de la base todo-db
 ![](img/Aspose.Words.f3f4b8c0-117f-46fb-bac8-a3c278a05a62.038.png)
 
 
+**SECCIÓN 6.**
+
+Para esta parte vamos a utilizar bind mounts, el cual es una herramienta que nos sirve para que el contenedor que tenemos actualmente ejecutando, quede sincronizado con el código fuente y de esta manera cuando se hagan cambios en el código fuente, vamos a ver reflejados los cambios en el contenedor.
+Entramos en la ruta del código fuente:
+![](img/S5-1.png)
+
+Ejecutamos el siguiente comando “docker run -it --mount type=bind,src="$(pwd)",target=/src ubuntu bash” para iniciar una sesión en un contenedor Ubuntu con un "bind mount".
+![](img/S5-2.png)
+
+El parámetro --mount indica a Docker que cree un "bind mount", donde "src" es el directorio de trabajo actual (getting-started-app) y "target" es dónde ese directorio debe aparecer dentro del contenedor (/src).
+
+Ahora podemos navegar dentro del directorio:
+![](img/S5-3.png)
+
+Ahora creamos un nuevo archivo
+
+![](img/S5-4.png)
+
+Y si vemos el directorio, vamos a ver el archivo creado:
+![](img/S5-5.png)
+
+Con control + d detenemos esta sesión
+
+Y ahora iniciaremos nuevamente el contenedor, pero con bind mounts, con este comando, adicionalmente iniciando una sh que ejecuta Yarn install para instalar paquetes y luego ejecuta Yarn run dev para iniciar el servidor de desarrollo:
+docker run -dp 127.0.0.1:3000:3000 \
+    -w /app --mount type=bind,src="$(pwd)",target=/app \
+    node:18-alpine \
+    sh -c "yarn install && yarn run dev"
+
+![](img/S5-6.png)
+
+Y podemos ver la logs que genera mediante el siguiente comando:
+“docker logs <container-id>”
+
+![](img/S5-7.png)
+
+Y de esta manera tenemos nuestro proyecto sincronizado
+
+**SECCIÓN 7.**
+
+Vamos a iniciar creando la red donde vamos a conectar sql con el siguiente comando:
+$ docker network create todo-app
+
+Porteriormente vamos a iniciar un contenedor de MySQL y conectarlo a la red con el siguiente comando:
+$ docker run -d \
+    --network todo-app --network-alias mysql \
+    -v todo-mysql-data:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=secret \
+    -e MYSQL_DATABASE=todos \
+    mysql:8.0
+
+![](img/S5-8.png)
+
+Vamos a conectarnos a la base de datos y validar que se pueda establecer conexión con el siguiente comando:
+docker exec -it <ID-del-contenedor-de-mysql> mysql -u root –p
+
+![](img/S5-9.png)
+
+Ahora validamos las bases de datos que existen:
+
+![](img/S5-10.png)
+
+Ahora iniciamos un nuevo contenedor bajo la misma red creada. Con el siguiente comando:
+docker run -it --network todo-app nicolaka/netshoot
+
+![](img/S5-11.png)
+
+Dentro del contenedor, vamos a utilizar el comando dig, que es una herramienta DNS útil, para buscar la dirección IP del nombre de host mysql.
+
+![](img/S5-12.png)
+
+
+Ahora vamos a ejecutar nuestro proyecto bajo la red creada con este comando:
+docker run -dp 127.0.0.1:3000:3000 \
+  -w /app -v "$(pwd):/app" \
+  --network todo-app \
+  -e MYSQL_HOST=mysql \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASSWORD=secret \
+  -e MYSQL_DB=todos \
+  node:18-alpine \
+  sh -c "yarn install && yarn run dev"
+
+![](img/S5-13.png)
+
+Ahora nos conectamos nuevamente a la base de datos y validamos que existan los items que creamos:
+
+![](img/S5-14.png)
+
+![](img/S5-15.png)
+
+![](img/S5-16.png)
+
+De esta manera nos aseguramos de la persistencia con la base de datos.
+
+
+**SECCIÓN 8.**
+
+Creamos el archivo compose, el cual va a ser un yaml
+
+![](img/S5-17.png)
+
+Y definimos en el yaml todos los comandos que hemos realizado anteriormente:
+
+![](img/S5-18.png)
+
+Ahora nos aseguramos que no tengamos ningún contenedor ejecutanse en el momento
+
+![](img/S5-19.png)
+
+Y procedemos a ejecutar la aplicación mediante el archivo compose con el siguiente comando: “docker compose up –d”
+
+![](img/S5-20.png)
+
+Podemos ver la historia de la imagen con el siguiente comando “docker image history getting-started”
+
+![](img/S5-21.png)
+
+
