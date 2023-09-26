@@ -1,5 +1,4 @@
 # PracticaDocker
-<<<<<<< HEAD
 =======
 
 **DOCKER**
@@ -256,4 +255,3 @@ Verificar la ubicación y existencia de la base todo-db
 ![](img/Aspose.Words.f3f4b8c0-117f-46fb-bac8-a3c278a05a62.038.png)
 
 
->>>>>>> 42799bdd52bff2aae4aa00cf98ba0c4fe02633ad
